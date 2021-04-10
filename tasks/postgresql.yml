@@ -1,0 +1,36 @@
+---
+- name: "setup | install postgresql repository"
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - postgresql11-server
+    - postgresql11
+
+- name: "setup | initialize postgresql database"
+  command: "{{ postgresql_bin_path }}/initdb -D {{ postgresql_data_dir }}"
+  become_user: "{{ postgresql_user }}"
+
+- name: "setup | make sure postgresql service started"
+  ansible.builtin.systemd:
+    name: postgresql
+    state: started
+
+- name: "setup | create zabbix database"
+  postgresql_db:
+    name: zabbix
+
+- name: "setup | create zabbix user"
+  postgresql_user:
+    name: zabbix
+    password: asdsvderqwd2d
+    priv: "zabbix:ALL"
+
+- name: unarchive zabbix schema
+  unarchive:
+    src: '/usr/share/doc/zabbix-server-pgsql*/create.sql.gz'
+    dest: /tmp/
+
+- name: create zabbix schema in database
+  command: "psql -d zabbix -f /tmp/create.sql"
+  
