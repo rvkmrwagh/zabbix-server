@@ -1,7 +1,7 @@
-Role Name
+ZABBIX SERVER
 =========
 
-A brief description of the role goes here.
+WORK IN PROCESS
 
 Requirements
 ------------
