@@ -1,14 +1,18 @@
 ---
 # defaults file for zabbix-server
-postgresql_bin_path: '/usr/bin'
+postgresql_bin_path: '/usr/pgsql-11/bin/postgresql-11-setup'
 postgresql_data_dir: '/home/data'
 postgresql_user: 'postgres'
+pg_repo: 'pgdg11'
+
+php_timezone: 'php_value[date.timezone] = Asia/Kolkata'
+
+zabbix_server_package: 'zabbix-server-pgsql'
 
 
-
-
-
-
+zabbix_db: 'zabbix'
+zabbix_db_user: 'zabbix'
+zabbix_db_pass: 'qwertyASDFG@123'
 
 
 

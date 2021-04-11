@@ -37,8 +37,30 @@
 
 - name: "setup | install zabbix frontend"
   yum:
-    name: "{{ item }}"
+    name: ['zabbix-web-pgsql-scl', 'zabbix-apache-conf-scl']
     state: present
-  with_items:
-    - zabbix-web-pgsql-scl
-    - zabbix-apache-conf-scl
+
+- name: "setup | install remi repository"
+  yum:
+    name: "http://rpms.remirepo.net/enterprise/remi-release-7.rpm"
+    state: present
+
+- name: "setup | install epel repository"
+  yum:
+    name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+    state: present
+
+- name: "setup | install php "
+  yum:
+    name: ['php', 'php-mcrypt', 'php-cli', 'php-gd', 'php-curl', 'php-mysql', 'php-ldap', 'php-zip', 'php-fileinfo']
+    state: present
+    enablerepo: "remi-php74"
+    disablerepo: "remi-php-*"
+  become: yes
+
+- name: "setup | set timezone in php"
+  lineinfile:
+    dest: /etc/opt/rh/rh-php72/php-fpm.d/zabbix.conf
+    regexp: '^; php_value\[date\.timezone\] = Europe\/Riga'
+    line: "{{ php_timezone }}"
+  become: yes
