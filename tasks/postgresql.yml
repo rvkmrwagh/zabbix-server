@@ -1,4 +1,9 @@
 ---
+- name: "setup | remove pg"
+  yum:
+    name: ["postgresql11-server", "postgresql11"]
+    state: absent
+
 - name: "setup | install postgresql repository"
   yum:
     name: "https://yum.postgresql.org/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
@@ -44,6 +49,13 @@
   command: "{{ postgresql_bin_path }} initdb"
   become: yes
 
+- name: "setup | modify pg hba"
+  lineinfile:
+    dest: /home/data/pg_hba.conf
+    regexp: '^local   all             all                                     peer'
+    line: "local   all             all                                     trust"
+  become: yes
+  become_user: "{{ postgresql_user }}"
 
 - name: "setup | make sure postgresql service started"
   ansible.builtin.systemd:
@@ -52,22 +64,38 @@
   become: yes
 
 - name: "setup | create zabbix database"
-  command: '"psql -c create database {{ zabbix_db }}"'
+  command: 'psql -c "create database {{ zabbix_db }}"'
+  become: yes
   become_user: "{{ postgresql_user }}"
 
 - name: "setup | create zabbix user"
-  command: '"psql -c create user zabbix with password {{ zabbix_db_pass }}"'
+  command: 'psql -c "create user zabbix with password {{ zabbix_db_pass }}"'
+  become: yes
   become_user: "{{ postgresql_user }}"
 
 - name: "setup | grant privileges to zabbix db user"
-  command: '"psql -c grant all privileges on database {{ zabbix_db }} to {{ zabbix_db_user }};"'
+  command: 'psql -c "grant all privileges on database {{ zabbix_db }} to {{ zabbix_db_user }}"'
+  become: yes
+  become_user: "{{ postgresql_user }}"
+
+#- name: "setup | remove old schema file"
+#  file:
+#    path: /usr/share/doc/zabbix-server-pgsql-5.0.10/
+#    state: absent
+##  ignore_errors: true
 
 - name: "setup | unarchive zabbix schema"
-  unarchive:
-    src: /usr/share/doc/zabbix-server-pgsql-5.0-10/create.sql.gz
-    dest: /tmp/create.sql
+  command: "gunzip /usr/share/doc/zabbix-server-pgsql-5.0.10/create.sql.gz"
+  become: yes
 
+- name: "setup | change file permission of schema file"
+  file:
+    path: /usr/share/doc/zabbix-server-pgsql-5.0.10/create.sql
+    owner: "{{ postgresql_user }}"
+    group: "{{ postgresql_user }}"
+  become: yes
 
 - name: "setup | create zabbix schema in database"
-  command: "psql -d zabbix -f /tmp/create.sql"
+  command: "psql -d zabbix -f /usr/share/doc/zabbix-server-pgsql-5.0.10/create.sql"
+  become: yes
   become_user: "{{ postgresql_user }}"

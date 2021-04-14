@@ -15,6 +15,10 @@
 #  tags:
 #    - zabbix-server
 
+- name: "setup | remove zabbix server packages"
+  yum:
+    name: "{{ zabbix_server_package }}"
+    state: absent
 - name: "setup | install zabbix repository"
   yum:
     name: https://repo.zabbix.com/zabbix/5.0/rhel/7/x86_64/zabbix-release-5.0-1.el7.noarch.rpm

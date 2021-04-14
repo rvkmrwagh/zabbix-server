@@ -1,0 +1,64 @@
+---
+- name: "setup | install postgresql repository"
+  yum:
+    name: "https://yum.postgresql.org/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+    state: present
+  become: yes
+
+- name: "setup | check postgres data dir exist"
+  state:
+  path: "{{ postgresql_data_dir }}"
+  register: pg_dir
+
+- name: "setup | cleanup postgres data dir"
+  file:
+    path: "{{ postgresql_data_dir }}"
+    state: absent
+
+- name: "setup | make sure postgres data dir exist"
+  file:
+    path: "{{ postgresql_data_dir }}"
+    state: directory
+    owner: "{{ postgresql_user }}"
+    group: "{{ postgresql_user }}"
+  when: ! pg_dir.stat.exists
+
+- name: "setup | install postgresql "
+  yum:
+    name: "{{ item }}"
+    state: present
+    disablerepo: 'pgdg*-*''
+    enablerepo: "{{ pg_repo }}"
+  with_items:
+    - postgresql11-server
+    - postgresql11
+
+- name: "setup | initialize postgresql database"
+  command: "{{ postgresql_bin_path }}/initdb -D {{ postgresql_data_dir }}"
+  become_user: "{{ postgresql_user }}"
+
+- name: "setup | make sure postgresql service started"
+  ansible.builtin.systemd:
+    name: postgresql
+    state: started
+
+- name: "setup | create zabbix database"
+  postgresql_db:
+    name: zabbix
+
+- name: "setup | create zabbix user"
+  postgresql_user:
+    name: zabbix
+    password: asdsvderqwd2d
+    priv: "zabbix:ALL"
+
+- name: "setup | unarchive zabbix schema"
+  unarchive:
+    src: /usr/share/doc/zabbix-server-pgsql-5.0-10/create.sql.gz
+    dest: /tmp/create.sql
+
+- name: "setup | create zabbix schema in database"
+  command: "psql -d zabbix -f /tmp/create.sql"
+
+
+Environment=PGDATA=/var/lib/pgsql/11/data/

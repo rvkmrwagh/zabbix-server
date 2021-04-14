@@ -12,7 +12,7 @@ zabbix_server_package: 'zabbix-server-pgsql'
 
 zabbix_db: 'zabbix'
 zabbix_db_user: 'zabbix'
-zabbix_db_pass: 'qwertyASDFG@123'
+zabbix_db_pass: "'qwertyASDFG123'"
 
 
 
